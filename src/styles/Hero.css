@@ -1,0 +1,46 @@
+.hero {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+    text-align: center;
+    padding: 80px 20px;
+  }
+  
+  .hero-content h2 {
+    font-size: 36px;
+    margin-bottom: 15px;
+  }
+  
+  .hero-content p {
+    font-size: 18px;
+    margin-bottom: 25px;
+  }
+  
+  .hero-button {
+    background-color: white;
+    color: #2575fc;
+    padding: 10px 20px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .hero-button:hover {
+    background-color: #2575fc;
+    color: white;
+  }
+  .post-card button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .post-card button:hover {
+    background-color: #218838;
+  }
+  
+  

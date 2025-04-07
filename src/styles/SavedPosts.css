@@ -1,0 +1,135 @@
+.saved {
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+  }
+  
+  .saved h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+  }
+  
+  .saved-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  
+  .saved-item {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .saved-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .saved-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+  
+  .saved-item-info {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .saved-item-info p {
+    margin: 0;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .saved-item-info button {
+    background: #ff4d4f;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+  }
+  
+  .saved-item-info button:hover {
+    background: #d9363e;
+  }
+  
+  .saved p {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #777;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: #777;
+  }
+  
+  .empty-state img {
+    width: 120px;
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+  
+  .empty-state p {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    color: #444;
+  }
+  
+  .empty-state small {
+    font-size: 0.95rem;
+    color: #888;
+  }
+  .saved-container {
+    padding-top: 70px; 
+  }
+  
+  .saved {
+    text-align: center;
+  }
+  
+  .saved-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+  }
+  
+  .saved-item {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .saved-item img {
+    width: 100%;
+    height: auto;
+  }
+  
+  .saved-item-info {
+    padding: 10px;
+  }
+  
+  .empty-state {
+    margin-top: 50px;
+  }
+  
+  .empty-state img {
+    width: 150px;
+    height: auto;
+  }
+  
