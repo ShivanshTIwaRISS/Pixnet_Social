@@ -1,59 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import "../styles/Chat.css";
 
-const dummyUsers = [
-  { id: 1, name: 'Alice Johnson', picture: 'https://randomuser.me/api/portraits/women/1.jpg' },
-  { id: 2, name: 'Bob Smith', picture: 'https://randomuser.me/api/portraits/men/2.jpg' },
-  { id: 3, name: 'Clara Lee', picture: 'https://randomuser.me/api/portraits/women/3.jpg' },
-  { id: 4, name: 'David Wilson', picture: 'https://randomuser.me/api/portraits/men/4.jpg' },
-  { id: 5, name: 'Emily Brown', picture: 'https://randomuser.me/api/portraits/women/5.jpg' },
-];
-
-const dummyMessages = [
-  { user: 'Alice Johnson', text: 'Hey! How are you?', timestamp: new Date() },
-  { user: 'You', text: 'I am good, thanks!', timestamp: new Date() },
-  { user: 'Alice Johnson', text: 'What are you up to?', timestamp: new Date() },
-];
-
 const ChatPage = () => {
-  const [users, setUsers] = useState(dummyUsers);
+  const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState({});
   const [message, setMessage] = useState('');
   const [typing, setTyping] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    // Load dummy users (already set initially)
-    setUsers(dummyUsers);
+    axios.get('https://randomuser.me/api/?results=10')
+      .then(response => setUsers(response.data.results))
+      .catch(error => console.error("Error fetching users:", error));
   }, []);
-
-  useEffect(() => {
-    if (selectedUser) {
-      setMessages(dummyMessages);
-      scrollToBottom();
-    }
-  }, [selectedUser]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      const newMessage = {
-        user: 'You',
-        text: message.trim(),
-        timestamp: new Date(),
-        replyTo: replyTo ? replyTo.text : null,
-      };
-      setMessages(prevMessages => [...prevMessages, newMessage]);
-      setMessage('');
-      setReplyTo(null);
-      setTyping(false);
-    }
-  };
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -67,41 +29,71 @@ const ChatPage = () => {
     }
   }, [message]);
 
+  const handleUserSelect = (user) => {
+    setSelectedUser(user);
+    setReplyTo(null);
+
+    setMessages(prev => ({
+      ...prev,
+      [user.login.uuid]: prev[user.login.uuid] || [
+        { user: user.name.first, text: 'Hey! How are you?', timestamp: new Date() },
+        { user: 'You', text: 'I am good, thanks!', timestamp: new Date() },
+        { user: user.name.first, text: 'What are you up to?', timestamp: new Date() },
+      ]
+    }));
+  };
+
+  const handleSendMessage = () => {
+    if (message.trim() && selectedUser) {
+      const newMessage = {
+        user: 'You',
+        text: message,
+        timestamp: new Date(),
+        replyTo: replyTo ? replyTo.text : null,
+      };
+
+      setMessages(prev => ({
+        ...prev,
+        [selectedUser.login.uuid]: [...(prev[selectedUser.login.uuid] || []), newMessage],
+      }));
+
+      setMessage('');
+      setReplyTo(null);
+      setTyping(false);
+      scrollToBottom();
+    }
+  };
+
+  const currentMessages = selectedUser ? messages[selectedUser.login.uuid] || [] : [];
+
   return (
     <div className="chat-container">
-      {/* User List */}
       <div className="user-list">
         <h3>Users</h3>
         <div className="user-list-items">
           {users.map(user => (
             <div
-              key={user.id}
-              className={`user-item ${selectedUser?.id === user.id ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedUser(user);
-                setReplyTo(null);
-              }}
+              key={user.login.uuid}
+              className={`user-item ${selectedUser && selectedUser.login.uuid === user.login.uuid ? 'active' : ''}`}
+              onClick={() => handleUserSelect(user)}
             >
-              <img src={user.picture} alt={user.name} />
-              <span>{user.name}</span>
+              <img src={user.picture.thumbnail} alt="User" />
+              <span>{user.name.first} {user.name.last}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Chat Box */}
       <div className="chat-box">
         {selectedUser ? (
           <>
-            {/* Chat Header */}
             <div className="chat-header">
-              <img src={selectedUser.picture} alt={selectedUser.name} />
-              <h2>{selectedUser.name}</h2>
+              <img src={selectedUser.picture.large} alt="User" />
+              <h2>{selectedUser.name.first} {selectedUser.name.last}</h2>
             </div>
 
-            {/* Messages */}
             <div className="messages">
-              {messages.map((msg, index) => (
+              {currentMessages.map((msg, index) => (
                 <div
                   key={index}
                   className={`message ${msg.user === 'You' ? 'sent' : 'received'}`}
@@ -113,9 +105,7 @@ const ChatPage = () => {
                       </div>
                     )}
                     <p>{msg.text}</p>
-                    <span className="timestamp">
-                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    <span className="timestamp">{new Date(msg.timestamp).toLocaleTimeString()}</span>
                     <button className="reply-btn" onClick={() => setReplyTo(msg)}>Reply</button>
                   </div>
                 </div>
@@ -123,7 +113,6 @@ const ChatPage = () => {
               <div ref={chatEndRef}></div>
             </div>
 
-            {/* Reply Indicator */}
             {replyTo && (
               <div className="replying-to">
                 Replying to: <strong>{replyTo.text}</strong>
@@ -131,7 +120,6 @@ const ChatPage = () => {
               </div>
             )}
 
-            {/* Message Input */}
             <div className="message-input">
               <input
                 type="text"
@@ -144,7 +132,7 @@ const ChatPage = () => {
             </div>
           </>
         ) : (
-          <p className="select-user-message">Select a user to start chatting</p>
+          <p>Select a user to start chatting</p>
         )}
       </div>
     </div>
