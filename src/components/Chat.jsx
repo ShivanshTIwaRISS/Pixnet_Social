@@ -5,77 +5,96 @@ import "../styles/Chat.css";
 const ChatPage = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [messages, setMessages] = useState({});
+  const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [typing, setTyping] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const chatEndRef = useRef(null);
 
+  // Fetch users once
   useEffect(() => {
-    axios.get('https://randomuser.me/api/?results=10')
-      .then(response => setUsers(response.data.results))
-      .catch(error => console.error("Error fetching users:", error));
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get('https://randomuser.me/api/?results=10');
+        setUsers(response.data.results);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
   }, []);
 
+  // Dummy messages when user selected
+  useEffect(() => {
+    if (selectedUser) {
+      setMessages([
+        { user: selectedUser.name.first, text: 'Hey! How are you?', timestamp: new Date() },
+        { user: 'You', text: 'I am good, thanks!', timestamp: new Date() },
+        { user: selectedUser.name.first, text: 'What are you up to?', timestamp: new Date() },
+      ]);
+    }
+  }, [selectedUser]);
+
+  // Scroll to bottom function
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100); // slight delay ensures new message renders
   };
 
+  // Send message
+  const handleSendMessage = () => {
+    if (message.trim() === '') return;
+
+    const newMessage = {
+      user: 'You',
+      text: message.trim(),
+      timestamp: new Date(),
+      replyTo: replyTo ? replyTo.text : null,
+    };
+
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    setMessage('');
+    setReplyTo(null);
+    setTyping(false);
+    scrollToBottom();
+
+    // Simulate reply from user after short delay
+    setTimeout(() => {
+      const simulatedReply = {
+        user: selectedUser.name.first,
+        text: 'Got your message!',
+        timestamp: new Date(),
+      };
+      setMessages((prevMessages) => [...prevMessages, simulatedReply]);
+      scrollToBottom();
+    }, 1500);
+  };
+
+  // Typing effect
   useEffect(() => {
-    if (message) {
+    if (message.trim() !== '') {
       setTyping(true);
     } else {
       setTyping(false);
     }
   }, [message]);
 
-  const handleUserSelect = (user) => {
-    setSelectedUser(user);
-    setReplyTo(null);
-
-    setMessages(prev => ({
-      ...prev,
-      [user.login.uuid]: prev[user.login.uuid] || [
-        { user: user.name.first, text: 'Hey! How are you?', timestamp: new Date() },
-        { user: 'You', text: 'I am good, thanks!', timestamp: new Date() },
-        { user: user.name.first, text: 'What are you up to?', timestamp: new Date() },
-      ]
-    }));
-  };
-
-  const handleSendMessage = () => {
-    if (message.trim() && selectedUser) {
-      const newMessage = {
-        user: 'You',
-        text: message,
-        timestamp: new Date(),
-        replyTo: replyTo ? replyTo.text : null,
-      };
-
-      setMessages(prev => ({
-        ...prev,
-        [selectedUser.login.uuid]: [...(prev[selectedUser.login.uuid] || []), newMessage],
-      }));
-
-      setMessage('');
-      setReplyTo(null);
-      setTyping(false);
-      scrollToBottom();
-    }
-  };
-
-  const currentMessages = selectedUser ? messages[selectedUser.login.uuid] || [] : [];
-
   return (
     <div className="chat-container">
+      {/* User List */}
       <div className="user-list">
         <h3>Users</h3>
         <div className="user-list-items">
-          {users.map(user => (
+          {users.map((user) => (
             <div
               key={user.login.uuid}
-              className={`user-item ${selectedUser && selectedUser.login.uuid === user.login.uuid ? 'active' : ''}`}
-              onClick={() => handleUserSelect(user)}
+              className={`user-item ${selectedUser?.login.uuid === user.login.uuid ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedUser(user);
+                setReplyTo(null);
+              }}
             >
               <img src={user.picture.thumbnail} alt="User" />
               <span>{user.name.first} {user.name.last}</span>
@@ -84,6 +103,7 @@ const ChatPage = () => {
         </div>
       </div>
 
+      {/* Chat Box */}
       <div className="chat-box">
         {selectedUser ? (
           <>
@@ -93,7 +113,7 @@ const ChatPage = () => {
             </div>
 
             <div className="messages">
-              {currentMessages.map((msg, index) => (
+              {messages.map((msg, index) => (
                 <div
                   key={index}
                   className={`message ${msg.user === 'You' ? 'sent' : 'received'}`}
@@ -105,7 +125,9 @@ const ChatPage = () => {
                       </div>
                     )}
                     <p>{msg.text}</p>
-                    <span className="timestamp">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                    <span className="timestamp">
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                     <button className="reply-btn" onClick={() => setReplyTo(msg)}>Reply</button>
                   </div>
                 </div>
@@ -126,9 +148,10 @@ const ChatPage = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type a message..."
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
               />
               <button onClick={handleSendMessage}>Send</button>
-              {typing && <div className="typing-indicator">...</div>}
+              {typing && <div className="typing-indicator">Typing...</div>}
             </div>
           </>
         ) : (
