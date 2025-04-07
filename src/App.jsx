@@ -7,7 +7,6 @@ import SavedPosts from "./components/SavedPosts";
 import Upload from "./components/UploadPost";
 import Notification from "./components/Notifications";
 import Profile from "./pages/Profile";
-import ChatPage from './components/Chat'; 
 
 import "./App.css";
 
@@ -35,12 +34,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/saved" element={<SavedPosts showNotification={showNotification} />} />
           <Route path="/upload" element={<Upload showNotification={showNotification} />} />
-          <Route path="/chat" element={<ChatPage />} /> {/* Add Chat Route */}
         </Routes>
-
-        <button className="chat-button" onClick={() => window.location.href = '/chat'}>
-          💬
-        </button>
       </div>
     </Router>
   );
