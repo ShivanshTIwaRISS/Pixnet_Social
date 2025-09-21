@@ -1,36 +1,66 @@
-import { Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/Navbar.css";
 import { Home, Image, Bookmark, User, UploadCloud } from "lucide-react";
 import logo from "../assets/image.png";
 
-function Navbar() {
+function Navbar({ onOpenUpload }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   return (
     <nav className="navbar">
+      {/* Logo */}
       <div className="logo">
         <img src={logo} alt="PixNet Logo" className="logo-image" />
-        <span className="logo-text">PixNet</span>
       </div>
+
+      {/* Navigation Buttons */}
       <div className="nav-links">
-        <Link to="/" className="nav-item">
+        <button
+          type="button"
+          className={`nav-item ${location.pathname === "/" ? "active" : ""}`}
+          onClick={() => navigate("/")}
+        >
           <Home className="nav-icon" />
           <span className="nav-label">Home</span>
-        </Link>
-        <Link to="/feed" className="nav-item">
+        </button>
+
+        <button
+          type="button"
+          className={`nav-item ${location.pathname === "/feed" ? "active" : ""}`}
+          onClick={() => navigate("/feed")}
+        >
           <Image className="nav-icon" />
           <span className="nav-label">Feed</span>
-        </Link>
-        <Link to="/saved" className="nav-item">
+        </button>
+
+        <button
+          type="button"
+          className={`nav-item ${location.pathname === "/saved" ? "active" : ""}`}
+          onClick={() => navigate("/saved")}
+        >
           <Bookmark className="nav-icon" />
           <span className="nav-label">Saved</span>
-        </Link>
-        <Link to="/profile" className="nav-item">
+        </button>
+
+        <button
+          type="button"
+          className={`nav-item ${location.pathname === "/profile" ? "active" : ""}`}
+          onClick={() => navigate("/profile")}
+        >
           <User className="nav-icon" />
           <span className="nav-label">Profile</span>
-        </Link>
-        <Link to="/upload" className="nav-item">
+        </button>
+
+        {/* Upload Button */}
+        <button
+          type="button"
+          className="nav-item upload-btn"
+          onClick={onOpenUpload}
+        >
           <UploadCloud className="nav-icon" />
           <span className="nav-label">Upload</span>
-        </Link>
+        </button>
       </div>
     </nav>
   );

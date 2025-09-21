@@ -15,9 +15,6 @@ const Saved = () => {
     const updatedPosts = savedPosts.filter((post) => post.id !== postId);
     setSavedPosts(updatedPosts);
     localStorage.setItem("bookmarkedPosts", JSON.stringify(updatedPosts));
-
-    // Optional: Toast notification (if you add toast library)
-    // toast.success("Post removed from saved!");
   };
 
   return (
@@ -41,11 +38,12 @@ const Saved = () => {
                 <img src={post.download_url} alt={post.author} />
                 <div className="saved-item-info">
                   <p>{post.author}</p>
-                  <div className="saved-item-actions">
-                    <button onClick={() => removeBookmark(post.id)}>
-                      ❌ Remove
-                    </button>
-                  </div>
+                  <button
+                    className="remove-btn"
+                    onClick={() => removeBookmark(post.id)}
+                  >
+                    Remove ❌
+                  </button>
                 </div>
               </div>
             ))}

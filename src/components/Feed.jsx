@@ -1,79 +1,119 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import "../styles/Feed.css";
+import Upload from "./UploadPost.jsx";
 
 const Feed = () => {
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [bookmarkedPosts, setBookmarkedPosts] = useState(() => {
     const saved = localStorage.getItem("bookmarkedPosts");
     return saved ? JSON.parse(saved) : [];
   });
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const observer = useRef();
 
+  // Fetch posts
   const fetchPosts = async (pageNumber) => {
     setLoading(true);
     try {
-      const response = await fetch(`https://picsum.photos/v2/list?page=${pageNumber}&limit=12`);
+      const response = await fetch(
+        `https://picsum.photos/v2/list?page=${pageNumber}&limit=20`
+      );
       const data = await response.json();
-      setPosts((prevPosts) => [...prevPosts, ...data]);
-    } catch (error) {
-      console.error("Error fetching posts:", error);
+      setPosts((prev) => [...prev, ...data]);
+    } catch (err) {
+      console.error("Error fetching posts:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchPosts(page);
   }, [page]);
 
-  const loadMore = () => {
-    setPage((prevPage) => prevPage + 1);
-  };
+  // Infinite Scroll
+  const lastPostRef = useCallback(
+    (node) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) setPage((prev) => prev + 1);
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loading]
+  );
 
+  // Bookmark Logic
   const toggleBookmark = (post) => {
-    let updatedBookmarks;
-    if (bookmarkedPosts.some((item) => item.id === post.id)) {
-      updatedBookmarks = bookmarkedPosts.filter((item) => item.id !== post.id);
+    let updated;
+    if (bookmarkedPosts.some((p) => p.id === post.id)) {
+      updated = bookmarkedPosts.filter((p) => p.id !== post.id);
     } else {
-      updatedBookmarks = [...bookmarkedPosts, post];
+      updated = [...bookmarkedPosts, post];
     }
-    setBookmarkedPosts(updatedBookmarks);
-    localStorage.setItem("bookmarkedPosts", JSON.stringify(updatedBookmarks));
+    setBookmarkedPosts(updated);
+    localStorage.setItem("bookmarkedPosts", JSON.stringify(updated));
   };
 
-  const isBookmarked = (postId) => bookmarkedPosts.some((post) => post.id === postId);
+  const isBookmarked = (id) => bookmarkedPosts.some((p) => p.id === id);
 
   return (
-    <div className="feed">
-      <h2>Explore Feed</h2>
+    <div className="explore-container">
+      {/* Floating Create Post Button (like Instagram’s “+” button) */}
+      <button className="create-post-btn" onClick={() => setIsUploadOpen(true)}>
+        ＋
+      </button>
 
-      <div className="feed-grid">
-        {posts.map((post) => (
-          <div className="feed-item" key={post.id}>
-            <img src={post.download_url} alt={post.author} />
-            <div className="feed-item-info">
-              <p>{post.author}</p>
+      {/* Grid */}
+      <div className="explore-grid">
+        {posts.map((post, i) => {
+          const isLast = i === posts.length - 1;
+          return (
+            <div
+              className="explore-card"
+              key={post.id}
+              ref={isLast ? lastPostRef : null}
+              onClick={() => setSelectedPost(post)}
+            >
+              <img src={post.download_url} alt={post.author} />
+              {/* Simulated Reel Icon */}
+              {Math.random() > 0.7 && <div className="reel-icon">🎥</div>}
               <button
-                className={`bookmark-btn ${isBookmarked(post.id) ? "bookmarked" : ""}`}
-                onClick={() => toggleBookmark(post)}
+                className={`bookmark-btn ${
+                  isBookmarked(post.id) ? "bookmarked" : ""
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleBookmark(post);
+                }}
               >
                 {isBookmarked(post.id) ? "★" : "☆"}
               </button>
             </div>
-          </div>
-        ))}
-
-        {loading &&
-          Array.from({ length: 6 }).map((_, index) => (
-            <div className="feed-item skeleton" key={`skeleton-${index}`}></div>
-          ))}
+          );
+        })}
       </div>
 
-      {!loading && (
-        <button className="load-more-btn" onClick={loadMore}>
-          Load More
-        </button>
+      {loading && <div className="loader"></div>}
+
+      {/* Modal for Enlarged Post */}
+      {selectedPost && (
+        <div className="modal" onClick={() => setSelectedPost(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <span className="close-btn" onClick={() => setSelectedPost(null)}>
+              ✕
+            </span>
+            <img src={selectedPost.download_url} alt={selectedPost.author} />
+          </div>
+        </div>
       )}
+
+      {/* Upload Modal */}
+      {isUploadOpen && <Upload onClose={() => setIsUploadOpen(false)} />}
     </div>
   );
 };
