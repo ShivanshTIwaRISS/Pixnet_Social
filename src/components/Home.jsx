@@ -8,15 +8,19 @@ import {
   BookmarkCheck,
   MoreHorizontal,
   X,
-  Check
 } from "lucide-react";
 import "../styles/Home.css";
+import { Link } from "react-router-dom";
+
 
 function Home() {
   const [posts, setPosts] = useState([]);
+  const [myPosts, setMyPosts] = useState(
+    JSON.parse(localStorage.getItem("myPosts")) || []
+  );
   const [stories, setStories] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
-  const [savedPosts, setSavedPosts] = useState(() =>
+  const [savedPosts, setSavedPosts] = useState(
     JSON.parse(localStorage.getItem("savedPosts")) || []
   );
   const [selectedPost, setSelectedPost] = useState(null);
@@ -43,21 +47,28 @@ function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [page]);
 
+  // Fetch Picsum posts
   const fetchPosts = async (pageNum) => {
     try {
-      const res = await axios.get(`https://picsum.photos/v2/list?page=${pageNum}&limit=5`);
+      const res = await axios.get(
+        `https://picsum.photos/v2/list?page=${pageNum}&limit=5`
+      );
       setPosts((prev) => [
         ...prev,
         ...res.data.map((p) => ({
           ...p,
+          id: p.id.toString(),
           username: randomUsername(),
-          avatar: `https://i.pravatar.cc/40?img=${Math.floor(Math.random() * 70)}`,
+          avatar: `https://i.pravatar.cc/40?img=${Math.floor(
+            Math.random() * 70
+          )}`,
           likes: Math.floor(Math.random() * 900 + 100),
           comments: [
             { user: "alex", text: "🔥 This is amazing!" },
             { user: "sara", text: "Wow! 😍" },
           ],
           isLiked: false,
+          type: "api",
         })),
       ]);
       setPage(pageNum);
@@ -66,6 +77,7 @@ function Home() {
     }
   };
 
+  // Dummy stories
   const fetchStories = () => {
     setStories(
       Array.from({ length: 10 }).map((_, i) => ({
@@ -76,6 +88,7 @@ function Home() {
     );
   };
 
+  // Dummy suggestions
   const fetchSuggestions = () => {
     setSuggestions(
       Array.from({ length: 5 }).map((_, i) => ({
@@ -87,6 +100,7 @@ function Home() {
     );
   };
 
+  // Dummy share users
   const fetchShareUsers = () => {
     setShareUsers(
       Array.from({ length: 6 }).map((_, i) => ({
@@ -99,20 +113,45 @@ function Home() {
   };
 
   const randomUsername = () => {
-    const names = ["neo", "mike", "julia", "lisa", "devon", "ash", "zoe", "ryan"];
-    return names[Math.floor(Math.random() * names.length)] + "_" + Math.floor(Math.random() * 999);
-  };
-
-  const toggleLike = (id) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }
-          : p
-      )
+    const names = [
+      "neo",
+      "mike",
+      "julia",
+      "lisa",
+      "devon",
+      "ash",
+      "zoe",
+      "ryan",
+    ];
+    return (
+      names[Math.floor(Math.random() * names.length)] +
+      "_" +
+      Math.floor(Math.random() * 999)
     );
   };
 
+  // Toggle like
+  const toggleLike = (id) => {
+    const updateFn = (arr) =>
+      arr.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              isLiked: !p.isLiked,
+              likes: p.isLiked ? p.likes - 1 : p.likes + 1,
+            }
+          : p
+      );
+
+    setPosts((prev) => updateFn(prev));
+    setMyPosts((prev) => {
+      const updated = updateFn(prev);
+      localStorage.setItem("myPosts", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Toggle save
   const toggleSave = (post) => {
     let updated;
     if (savedPosts.some((p) => p.id === post.id)) {
@@ -124,25 +163,35 @@ function Home() {
     localStorage.setItem("savedPosts", JSON.stringify(updated));
   };
 
+  // Toggle follow
   const toggleFollow = (id) => {
     setSuggestions((prev) =>
       prev.map((s) => (s.id === id ? { ...s, isFollowing: !s.isFollowing } : s))
     );
   };
 
+  // Add comment
   const addComment = (postId, commentText) => {
     if (!commentText.trim()) return;
-    setPosts((prev) =>
-      prev.map((p) =>
+    const updateFn = (arr) =>
+      arr.map((p) =>
         p.id === postId
-          ? { ...p, comments: [...p.comments, { user: "you", text: commentText }] }
+          ? {
+              ...p,
+              comments: [...p.comments, { user: "you", text: commentText }],
+            }
           : p
-      )
-    );
+      );
+    setPosts((prev) => updateFn(prev));
+    setMyPosts((prev) => {
+      const updated = updateFn(prev);
+      localStorage.setItem("myPosts", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText("https://yourapp.com/post/" + showShare.id);
+    navigator.clipboard.writeText("https://pixnet.com/post/" + showShare.id);
     showToast("🔗 Link copied to clipboard!");
   };
 
@@ -157,9 +206,12 @@ function Home() {
     setTimeout(() => setToast(""), 2000);
   };
 
+  // Merge my posts (local) + API posts
+  const allPosts = [...myPosts, ...posts];
+
   return (
     <div className="home-layout">
-      {/* FEED SECTION */}
+      {/* FEED */}
       <div className="feed">
         {/* Stories */}
         <div className="stories-bar">
@@ -172,17 +224,28 @@ function Home() {
         </div>
 
         {/* Posts */}
-        {posts.map((post) => (
+        {allPosts.map((post) => (
           <div className="post-card" key={post.id}>
             <div className="post-header">
+             
               <div className="ph-left">
-                <img src={post.avatar} alt={post.username} />
-                <span>{post.username}</span>
+                {/* LINK TO USER PROFILE */}
+                <Link to={`/user/${post.username}`}>
+                  <img src={post.avatar} alt={post.username} />
+                </Link>
+                <Link to={`/user/${post.username}`}>
+                  <span>{post.username}</span>
+                </Link>
+              
               </div>
               <MoreHorizontal className="more-icon" />
             </div>
 
-            <img src={post.download_url} alt={post.username} className="post-img" />
+            <img
+              src={post.download_url || post.image}
+              alt={post.username}
+              className="post-img"
+            />
 
             <div className="post-actions">
               <div className="left-actions">
@@ -203,6 +266,7 @@ function Home() {
             </div>
 
             <p className="likes">{post.likes} likes</p>
+            {post.caption && <p className="caption">{post.caption}</p>}
             <p className="view-comments" onClick={() => setSelectedPost(post)}>
               View all {post.comments.length} comments
             </p>
@@ -228,7 +292,11 @@ function Home() {
       {selectedPost && (
         <div className="modal-overlay" onClick={() => setSelectedPost(null)}>
           <div className="comment-modal" onClick={(e) => e.stopPropagation()}>
-            <img src={selectedPost.download_url} alt="post" className="modal-img" />
+            <img
+              src={selectedPost.download_url || selectedPost.image}
+              alt="post"
+              className="modal-img"
+            />
             <div className="modal-comments">
               <div className="modal-header">
                 <h3>Comments</h3>
@@ -276,17 +344,15 @@ function Home() {
               <X onClick={() => setShowShare(null)} />
             </div>
             <div className="share-options">
-              <button onClick={handleCopyLink}>
-                <img src="/icons/link.svg" alt="copy" /> Copy Link
-              </button>
+              <button onClick={handleCopyLink}>🔗 Copy Link</button>
               <button onClick={() => showToast("Opening WhatsApp...")}>
-                <img src="/icons/whatsapp.svg" alt="whatsapp" /> WhatsApp
+                📱 WhatsApp
               </button>
               <button onClick={() => showToast("Opening Facebook...")}>
-                <img src="/icons/facebook.svg" alt="facebook" /> Facebook
+                📘 Facebook
               </button>
               <button onClick={() => showToast("Opening Twitter...")}>
-                <img src="/icons/twitter.svg" alt="twitter" /> Twitter
+                🐦 Twitter
               </button>
             </div>
             <hr />

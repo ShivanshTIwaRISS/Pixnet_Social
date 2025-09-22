@@ -1,8 +1,9 @@
+// src/components/UserProfile.jsx
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "../styles/Profile.css";
 
-const Profile = () => {
+const UserProfile = () => {
   const { username } = useParams();
   const [userData, setUserData] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -12,7 +13,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("posts");
 
   useEffect(() => {
-    // Basic user info
+    // User info
     setUserData({
       username: username || "pix_user",
       avatar: `https://i.pravatar.cc/150?u=${username}`,
@@ -21,40 +22,47 @@ const Profile = () => {
       following: Math.floor(Math.random() * 500) + 50,
     });
 
-    // Load local posts
-    const localPosts = JSON.parse(localStorage.getItem("posts")) || [];
+    // Load local posts (optional: only if the username matches local)
+    const localPosts = JSON.parse(localStorage.getItem("myPosts")) || [];
+    const userPosts =
+      username === (localStorage.getItem("currentUser") || "pix_user")
+        ? localPosts
+        : [];
 
-    // Fake API posts for filler
+    // API filler posts
     fetch(
       `https://picsum.photos/v2/list?page=${
         Math.floor(Math.random() * 5) + 1
       }&limit=6`
     )
       .then((res) => res.json())
-      .then((data) => {
-        const apiPosts = data.map((d) => ({
-          id: d.id,
-          mediaUrl: d.download_url,
-          type: "image",
-          caption: "Random API post 🌟",
-        }));
-        setPosts([...localPosts, ...apiPosts]);
-      });
+      .then((data) =>
+        setPosts([
+          ...userPosts,
+          ...data.map((d) => ({
+            id: d.id,
+            mediaUrl: d.download_url,
+            type: "image",
+            caption: "Random API post 🌟",
+          })),
+        ])
+      );
 
     fetch(
       `https://picsum.photos/v2/list?page=${
         Math.floor(Math.random() * 5) + 6
       }&limit=6`
     )
-      .then((res) => res.json())
-      .then((data) =>
-        setReels(
-          data.map((d) => ({
-            id: d.id,
-            mediaUrl: d.download_url,
-            type: "video",
-            caption: "Random API reel 🎥",
-          }))
+      .then((res) =>
+        res.json().then((data) =>
+          setReels(
+            data.map((d) => ({
+              id: d.id,
+              mediaUrl: d.download_url,
+              type: "video",
+              caption: "Random API reel 🎥",
+            }))
+          )
         )
       );
 
@@ -63,15 +71,16 @@ const Profile = () => {
         Math.floor(Math.random() * 5) + 10
       }&limit=4`
     )
-      .then((res) => res.json())
-      .then((data) =>
-        setTagged(
-          data.map((d) => ({
-            id: d.id,
-            mediaUrl: d.download_url,
-            type: "image",
-            caption: "Tagged photo 🏷",
-          }))
+      .then((res) =>
+        res.json().then((data) =>
+          setTagged(
+            data.map((d) => ({
+              id: d.id,
+              mediaUrl: d.download_url,
+              type: "image",
+              caption: "Tagged photo 🏷",
+            }))
+          )
         )
       );
   }, [username]);
@@ -187,4 +196,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default UserProfile;

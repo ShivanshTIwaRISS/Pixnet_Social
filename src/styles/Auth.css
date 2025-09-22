@@ -1,0 +1,141 @@
+/* src/pages/Auth.css */
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #000;
+}
+
+.auth-card {
+  background: #000;
+  border: 1px solid #262626;
+  padding: 40px 30px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  width: 350px;
+}
+
+.logo {
+  font-family: "Billabong", cursive;
+  font-size: 48px;
+  color: white;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+input {
+  background: #111;
+  border: 1px solid #262626;
+  padding: 12px;
+  border-radius: 6px;
+  color: white;
+}
+
+button {
+  background: #0095f6;
+  border: none;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #aaa;
+}
+.auth-footer a {
+  color: #0095f6;
+  font-weight: 600;
+}
+/* small helpers for forgot/reset UI */
+.forgot-line {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.forgot-link {
+  color: #0095f6; /* Instagram blue */
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.info {
+  color: #ccc; /* lighter gray for dark mode */
+  margin-top: 8px;
+  text-align: center;
+}
+
+.reset-link {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-direction: column;
+}
+
+.reset-link input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.reset-link input::placeholder {
+  color: #aaa;
+}
+
+.reset-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.reset-actions button {
+  background: #0095f6;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.reset-actions button:hover {
+  background: #007acb;
+}
+
+/* Force all text in auth card to be white */
+.auth-card,
+.auth-card h1,
+.auth-card h3,
+.auth-card p {
+  color: #fff;
+}
+
+/* Make ALL auth links blue (login, register, forgot password) */
+.auth-card a {
+  color: #0095f6;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-card a:hover {
+  text-decoration: underline;
+}
