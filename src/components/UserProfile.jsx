@@ -1,4 +1,3 @@
-// src/components/UserProfile.jsx
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "../styles/Profile.css";
@@ -11,6 +10,7 @@ const UserProfile = () => {
   const [tagged, setTagged] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [activeTab, setActiveTab] = useState("posts");
+  const [isFollowing, setIsFollowing] = useState(false); // ✅ Follow toggle state
 
   useEffect(() => {
     // User info
@@ -127,7 +127,12 @@ const UserProfile = () => {
           <div className="profile-top">
             <h2>@{userData.username}</h2>
             <div className="profile-actions">
-              <button className="follow-btn">Follow</button>
+              <button
+                className={`follow-btn ${isFollowing ? "following" : ""}`}
+                onClick={() => setIsFollowing(!isFollowing)}
+              >
+                {isFollowing ? "Following" : "Follow"}
+              </button>
               <button className="message-btn">Message</button>
               <button className="more-btn">⋯</button>
             </div>

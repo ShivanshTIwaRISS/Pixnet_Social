@@ -274,19 +274,26 @@ function Home() {
         ))}
       </div>
 
-      {/* RIGHT SIDEBAR */}
-      <div className="right-sidebar">
-        <h3>Suggested for you</h3>
-        {suggestions.map((u) => (
-          <div className="suggested-user" key={u.id}>
-            <img src={u.avatar} alt={u.name} />
-            <span>{u.name}</span>
-            <button className="follow-btn" onClick={() => toggleFollow(u.id)}>
-              {u.isFollowing ? "Following" : "Follow"}
-            </button>
-          </div>
-        ))}
-      </div>
+ {/* RIGHT SIDEBAR */}
+<div className="right-sidebar">
+  <h3>Suggested for you</h3>
+  {suggestions.map((u) => (
+    <div className="suggested-user" key={u.id}>
+      {/* Link to user profile */}
+      <Link to={`/user/${u.name}`}>
+        <img src={u.avatar} alt={u.name} />
+      </Link>
+      <Link to={`/user/${u.name}`}>
+        <span>{u.name}</span>
+      </Link>
+      {/* Follow / Following toggle */}
+      <button className="follow-btn" onClick={() => toggleFollow(u.id)}>
+        {u.isFollowing ? "Following" : "Follow"}
+      </button>
+    </div>
+  ))}
+</div>
+
 
       {/* COMMENTS MODAL */}
       {selectedPost && (

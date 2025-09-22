@@ -64,9 +64,9 @@ const Feed = () => {
   return (
     <div className="explore-container">
       {/* Floating Create Post Button (like Instagram’s “+” button) */}
-      <button className="create-post-btn" onClick={() => setIsUploadOpen(true)}>
+      {/* <button className="create-post-btn" onClick={() => setIsUploadOpen(true)}>
         ＋
-      </button>
+      </button> */}
 
       {/* Grid */}
       <div className="explore-grid">

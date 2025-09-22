@@ -278,3 +278,12 @@
   color: white;
 }
 
+/* Make all links in the home layout white */
+.home-layout a {
+  color: white;
+  text-decoration: none;
+}
+
+.home-layout a:hover {
+  text-decoration: underline; /* optional hover effect */
+}
