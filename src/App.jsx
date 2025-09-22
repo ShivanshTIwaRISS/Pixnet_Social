@@ -1,4 +1,3 @@
-// src/App.jsx (full updated file)
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
@@ -14,6 +13,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserProfile from "./components/UserProfile";
+import Inbox from "./components/Inbox"; // ✅ Import Inbox page
 
 import "./App.css";
 
@@ -41,7 +41,10 @@ function App() {
 
   return (
     <Router>
+      {/* Global Notification */}
       <Notification message={notification} clearNotification={clearNotification} />
+
+      {/* Upload Modal */}
       {isUploadOpen && <Upload onClose={() => setIsUploadOpen(false)} />}
 
       <Layout onOpenUpload={() => setIsUploadOpen(true)}>
@@ -53,7 +56,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword showNotification={showNotification} />} />
           <Route path="/user/:username" element={<UserProfile />} />
 
-          {/* Protected */}
+          {/* Protected Routes */}
           <Route
             path="/"
             element={
@@ -83,6 +86,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SavedPosts showNotification={showNotification} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inbox"   // ✅ Dark-themed Inbox page
+            element={
+              <ProtectedRoute>
+                <Inbox />
               </ProtectedRoute>
             }
           />

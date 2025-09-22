@@ -1,14 +1,14 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/Navbar.css";
-import { Home, Image, Bookmark, User, UploadCloud, LogOut } from "lucide-react";
+import { Home, Image, Bookmark, User, UploadCloud, LogOut, Mail } from "lucide-react";
 import { signOut } from "firebase/auth";
-import { auth } from "../firebase"; // <-- make sure you have this exported
+import { auth } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 
-function Navbar({ onOpenUpload }) {
+function Navbar({ onOpenUpload }) { // removed onOpenInbox, we'll navigate to /inbox
   const location = useLocation();
   const navigate = useNavigate();
-  const [user] = useAuthState(auth); // listens to current user
+  const [user] = useAuthState(auth);
 
   const handleLogout = async () => {
     try {
@@ -21,7 +21,7 @@ function Navbar({ onOpenUpload }) {
 
   return (
     <nav className="navbar">
-      {/* Logo (Clickable - redirects to home) */}
+      {/* Logo */}
       <div className="logo" onClick={() => navigate("/")}>
         <span className="logo-text">PixNet</span>
       </div>
@@ -55,6 +55,16 @@ function Navbar({ onOpenUpload }) {
           <span className="nav-label">Saved</span>
         </button>
 
+{/* Inbox / Messages Button */}
+        <button
+          type="button"
+          className="nav-item inbox-btn"
+          onClick={() => navigate("/inbox")} // ✅ Navigate to Inbox page
+        >
+          <Mail className="nav-icon" />
+          <span className="nav-label">Inbox</span>
+        </button>
+        
         <button
           type="button"
           className={`nav-item ${location.pathname === "/profile" ? "active" : ""}`}
@@ -68,6 +78,8 @@ function Navbar({ onOpenUpload }) {
           <span className="nav-label">Profile</span>
         </button>
 
+        
+
         {/* Upload Button */}
         <button
           type="button"
@@ -77,6 +89,8 @@ function Navbar({ onOpenUpload }) {
           <UploadCloud className="nav-icon" />
           <span className="nav-label">Upload</span>
         </button>
+
+        
 
         {/* Logout Button */}
         {user && (
