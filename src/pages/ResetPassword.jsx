@@ -1,157 +1,98 @@
-import React, { useState } from 'react';
-import { confirmPasswordReset } from 'firebase/auth';
-import { auth } from '../firebase';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
-import '../styles/Auth.css';
+// src/pages/ResetPassword.jsx
+import React, { useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
+import { auth } from "../firebase";
+import "../styles/Auth.css";
 
 export default function ResetPassword({ showNotification }) {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const oobCode = searchParams.get('oobCode');
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [valid, setValid] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
 
-  const handleReset = async (e) => {
-    e.preventDefault();
-    
-    if (password !== confirmPassword) {
-      showNotification?.('❌ Passwords do not match');
-      return;
-    }
+  const oobCode = searchParams.get("oobCode");
 
+  React.useEffect(() => {
     if (!oobCode) {
-      showNotification?.('❌ Invalid reset link');
+      setLoading(false);
+      setValid(false);
       return;
     }
 
-    setLoading(true);
+    // Verify the reset link with Firebase
+    verifyPasswordResetCode(auth, oobCode)
+      .then((email) => {
+        setEmail(email);
+        setValid(true);
+        setLoading(false);
+      })
+      .catch(() => {
+        setValid(false);
+        setLoading(false);
+      });
+  }, [oobCode]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!password || password.length < 6)
+      return alert("Password must be at least 6 characters");
+    if (password !== confirm) return alert("Passwords do not match");
+
     try {
       await confirmPasswordReset(auth, oobCode, password);
-      showNotification?.('✅ Password reset successfully!');
-      navigate('/login');
+      if (showNotification)
+        showNotification("✅ Password reset successful. Please log in.");
+      navigate("/login");
     } catch (err) {
-      showNotification?.('❌ ' + err.message);
-    } finally {
-      setLoading(false);
+      alert("Failed to reset password: " + err.message);
     }
   };
 
-  if (!oobCode) {
+  if (loading)
     return (
       <div className="auth-page">
-        <div className="auth-container">
-          <div className="auth-form-container" style={{ maxWidth: '350px', margin: '0 auto' }}>
-            <div className="auth-card">
-              <h1 className="auth-logo">
-                <span className="logo-gradient">PixNet</span>
-              </h1>
-              <p className="info">Invalid or expired reset link.</p>
-              <Link to="/forgot" className="forgot-link">
-                Request a new reset link
-              </Link>
-            </div>
-          </div>
+        <div className="auth-card">
+          <p>Checking reset link…</p>
         </div>
       </div>
     );
-  }
+
+  if (!valid)
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <h3>Invalid or expired reset link</h3>
+          <p>
+            <a href="/forgot">Request a new link</a>
+          </p>
+        </div>
+      </div>
+    );
 
   return (
     <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-branding">
-          <div className="auth-branding-content">
-            <div className="auth-phone-mockup">
-              <div className="phone-screen">
-                <div className="phone-content">
-                  <div className="phone-post">
-                    <div className="phone-post-header">
-                      <div className="phone-avatar"></div>
-                      <div className="phone-user-info">
-                        <div className="phone-username"></div>
-                        <div className="phone-location"></div>
-                      </div>
-                    </div>
-                    <div className="phone-image"></div>
-                    <div className="phone-actions">
-                      <div className="phone-action-icon"></div>
-                      <div className="phone-action-icon"></div>
-                      <div className="phone-action-icon"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="auth-form-container">
-          <div className="auth-card">
-            <h1 className="auth-logo">
-              <span className="logo-gradient">PixNet</span>
-            </h1>
-            <h2 className="auth-tagline">Create a new password</h2>
-            <p className="info">
-              Your new password must be different from previous passwords.
-            </p>
-
-            <form onSubmit={handleReset} className="auth-form">
-              <div className="input-group password-group">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="New password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="auth-input"
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label="Toggle password visibility"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-
-              <div className="input-group password-group">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="auth-input"
-                  required
-                />
-              </div>
-
-              <button 
-                type="submit" 
-                className="auth-btn"
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="btn-spinner"></div>
-                ) : (
-                  'Reset Password'
-                )}
-              </button>
-            </form>
-          </div>
-
-          <div className="auth-card signup-card">
-            <p className="signup-text">
-              Remember your password?{' '}
-              <Link to="/login" className="signup-link">
-                Log in
-              </Link>
-            </p>
-          </div>
-        </div>
+      <div className="auth-card">
+        <h1 className="logo">PixNet</h1>
+        <h3>Reset password for {email}</h3>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="password"
+            placeholder="New password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Confirm new password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+          <button type="submit">Set new password</button>
+        </form>
       </div>
     </div>
   );

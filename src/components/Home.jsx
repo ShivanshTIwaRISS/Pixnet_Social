@@ -1,69 +1,54 @@
-import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Heart,
   MessageCircle,
   Send,
   Bookmark,
+  BookmarkCheck,
   MoreHorizontal,
   X,
-  Smile,
-} from 'lucide-react';
-import '../styles/Home.css';
-import { Link } from 'react-router-dom';
+} from "lucide-react";
+import "../styles/Home.css";
+import { Link } from "react-router-dom";
+
 
 function Home() {
   const [posts, setPosts] = useState([]);
   const [myPosts, setMyPosts] = useState(
-    JSON.parse(localStorage.getItem('myPosts')) || []
+    JSON.parse(localStorage.getItem("myPosts")) || []
   );
   const [stories, setStories] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [savedPosts, setSavedPosts] = useState(
-    JSON.parse(localStorage.getItem('savedPosts')) || []
+    JSON.parse(localStorage.getItem("savedPosts")) || []
   );
   const [selectedPost, setSelectedPost] = useState(null);
   const [showShare, setShowShare] = useState(null);
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState("");
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [shareUsers, setShareUsers] = useState([]);
-  const [likedAnimations, setLikedAnimations] = useState({});
-  const observerRef = useRef(null);
 
   useEffect(() => {
     fetchPosts(page);
     fetchStories();
     fetchSuggestions();
     fetchShareUsers();
-  }, []);
 
-  // Infinite scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loading) {
-          setPage((prev) => prev + 1);
-        }
-      },
-      { threshold: 1.0 }
-    );
-
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loading]);
-
-  useEffect(() => {
-    if (page > 1) {
-      fetchPosts(page);
-    }
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop + 10 >=
+        document.documentElement.scrollHeight
+      ) {
+        fetchPosts(page + 1);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [page]);
 
+  // Fetch Picsum posts
   const fetchPosts = async (pageNum) => {
-    setLoading(true);
     try {
       const res = await axios.get(
         `https://picsum.photos/v2/list?page=${pageNum}&limit=5`
@@ -72,36 +57,38 @@ function Home() {
         ...prev,
         ...res.data.map((p) => ({
           ...p,
-          id: `${p.id}-${pageNum}`,
+          id: p.id.toString(),
           username: randomUsername(),
-          avatar: `https://i.pravatar.cc/40?img=${Math.floor(Math.random() * 70)}`,
+          avatar: `https://i.pravatar.cc/40?img=${Math.floor(
+            Math.random() * 70
+          )}`,
           likes: Math.floor(Math.random() * 900 + 100),
           comments: [
-            { user: 'alex', text: '🔥 This is amazing!' },
-            { user: 'sara', text: 'Wow! 😍' },
+            { user: "alex", text: "🔥 This is amazing!" },
+            { user: "sara", text: "Wow! 😍" },
           ],
           isLiked: false,
-          type: 'api',
+          type: "api",
         })),
       ]);
+      setPage(pageNum);
     } catch (err) {
-      console.error('Error fetching posts', err);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching posts", err);
     }
   };
 
+  // Dummy stories
   const fetchStories = () => {
     setStories(
       Array.from({ length: 10 }).map((_, i) => ({
         id: i,
         user: randomUsername(),
         img: `https://picsum.photos/seed/story${i}/80/80`,
-        hasStory: Math.random() > 0.3,
       }))
     );
   };
 
+  // Dummy suggestions
   const fetchSuggestions = () => {
     setSuggestions(
       Array.from({ length: 5 }).map((_, i) => ({
@@ -113,6 +100,7 @@ function Home() {
     );
   };
 
+  // Dummy share users
   const fetchShareUsers = () => {
     setShareUsers(
       Array.from({ length: 6 }).map((_, i) => ({
@@ -125,21 +113,25 @@ function Home() {
   };
 
   const randomUsername = () => {
-    const names = ['neo', 'mike', 'julia', 'lisa', 'devon', 'ash', 'zoe', 'ryan'];
+    const names = [
+      "neo",
+      "mike",
+      "julia",
+      "lisa",
+      "devon",
+      "ash",
+      "zoe",
+      "ryan",
+    ];
     return (
       names[Math.floor(Math.random() * names.length)] +
-      '_' +
+      "_" +
       Math.floor(Math.random() * 999)
     );
   };
 
+  // Toggle like
   const toggleLike = (id) => {
-    // Add heart animation
-    setLikedAnimations((prev) => ({ ...prev, [id]: true }));
-    setTimeout(() => {
-      setLikedAnimations((prev) => ({ ...prev, [id]: false }));
-    }, 1000);
-
     const updateFn = (arr) =>
       arr.map((p) =>
         p.id === id
@@ -154,11 +146,12 @@ function Home() {
     setPosts((prev) => updateFn(prev));
     setMyPosts((prev) => {
       const updated = updateFn(prev);
-      localStorage.setItem('myPosts', JSON.stringify(updated));
+      localStorage.setItem("myPosts", JSON.stringify(updated));
       return updated;
     });
   };
 
+  // Toggle save
   const toggleSave = (post) => {
     let updated;
     if (savedPosts.some((p) => p.id === post.id)) {
@@ -167,15 +160,17 @@ function Home() {
       updated = [...savedPosts, post];
     }
     setSavedPosts(updated);
-    localStorage.setItem('savedPosts', JSON.stringify(updated));
+    localStorage.setItem("savedPosts", JSON.stringify(updated));
   };
 
+  // Toggle follow
   const toggleFollow = (id) => {
     setSuggestions((prev) =>
       prev.map((s) => (s.id === id ? { ...s, isFollowing: !s.isFollowing } : s))
     );
   };
 
+  // Add comment
   const addComment = (postId, commentText) => {
     if (!commentText.trim()) return;
     const updateFn = (arr) =>
@@ -183,21 +178,21 @@ function Home() {
         p.id === postId
           ? {
               ...p,
-              comments: [...p.comments, { user: 'you', text: commentText }],
+              comments: [...p.comments, { user: "you", text: commentText }],
             }
           : p
       );
     setPosts((prev) => updateFn(prev));
     setMyPosts((prev) => {
       const updated = updateFn(prev);
-      localStorage.setItem('myPosts', JSON.stringify(updated));
+      localStorage.setItem("myPosts", JSON.stringify(updated));
       return updated;
     });
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText('https://pixnet.com/post/' + showShare.id);
-    showToast('🔗 Link copied to clipboard!');
+    navigator.clipboard.writeText("https://pixnet.com/post/" + showShare.id);
+    showToast("🔗 Link copied to clipboard!");
   };
 
   const toggleSendUser = (id) => {
@@ -208,276 +203,135 @@ function Home() {
 
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(''), 2000);
+    setTimeout(() => setToast(""), 2000);
   };
 
-  // Double tap to like
-  const handleDoubleTap = (e, post) => {
-    if (!post.isLiked) {
-      toggleLike(post.id);
-    }
-  };
-
+  // Merge my posts (local) + API posts
   const allPosts = [...myPosts, ...posts];
 
   return (
     <div className="home-layout">
-      {/* Feed */}
+      {/* FEED */}
       <div className="feed">
         {/* Stories */}
-        <div className="stories-container">
-          <div className="stories-bar">
-            {stories.map((s) => (
-              <div key={s.id} className="story-item">
-                <div className={`story-ring ${s.hasStory ? 'has-story' : ''}`}>
-                  <img src={s.img} alt={s.user} className="story-avatar" />
-                </div>
-                <span className="story-username">{s.user}</span>
-              </div>
-            ))}
-          </div>
+        <div className="stories-bar">
+          {stories.map((s) => (
+            <div key={s.id} className="story">
+              <img src={s.img} alt={s.user} />
+              <p>{s.user}</p>
+            </div>
+          ))}
         </div>
 
         {/* Posts */}
         {allPosts.map((post) => (
-          <article className="post-card" key={post.id}>
-            {/* Post Header */}
-            <header className="post-header">
-              <div className="post-user">
+          <div className="post-card" key={post.id}>
+            <div className="post-header">
+             
+              <div className="ph-left">
+                {/* LINK TO USER PROFILE */}
                 <Link to={`/user/${post.username}`}>
-                  <img src={post.avatar} alt={post.username} className="post-avatar" />
+                  <img src={post.avatar} alt={post.username} />
                 </Link>
-                <Link to={`/user/${post.username}`} className="post-username">
-                  {post.username}
+                <Link to={`/user/${post.username}`}>
+                  <span>{post.username}</span>
                 </Link>
+              
               </div>
-              <button className="post-options" aria-label="More options">
-                <MoreHorizontal />
-              </button>
-            </header>
-
-            {/* Post Image */}
-            <div 
-              className="post-image-container"
-              onDoubleClick={(e) => handleDoubleTap(e, post)}
-            >
-              <img
-                src={post.download_url || post.image}
-                alt="Post"
-                className="post-image"
-                loading="lazy"
-              />
-              {likedAnimations[post.id] && (
-                <div className="like-animation">
-                  <Heart className="like-heart" fill="white" />
-                </div>
-              )}
+              <MoreHorizontal className="more-icon" />
             </div>
 
-            {/* Post Actions */}
+            <img
+              src={post.download_url || post.image}
+              alt={post.username}
+              className="post-img"
+            />
+
             <div className="post-actions">
-              <div className="post-actions-left">
-                <button 
-                  className={`action-btn ${post.isLiked ? 'liked' : ''}`}
+              <div className="left-actions">
+                <Heart
+                  className={post.isLiked ? "liked" : ""}
                   onClick={() => toggleLike(post.id)}
-                  aria-label="Like"
-                >
-                  <Heart fill={post.isLiked ? '#ed4956' : 'none'} />
-                </button>
-                <button 
-                  className="action-btn"
-                  onClick={() => setSelectedPost(post)}
-                  aria-label="Comment"
-                >
-                  <MessageCircle />
-                </button>
-                <button 
-                  className="action-btn"
-                  onClick={() => setShowShare(post)}
-                  aria-label="Share"
-                >
-                  <Send />
-                </button>
+                />
+                <MessageCircle onClick={() => setSelectedPost(post)} />
+                <Send onClick={() => setShowShare(post)} />
               </div>
-              <button 
-                className="action-btn"
-                onClick={() => toggleSave(post)}
-                aria-label="Save"
-              >
-                <Bookmark fill={savedPosts.some((p) => p.id === post.id) ? 'currentColor' : 'none'} />
-              </button>
+              <div className="right-actions">
+                {savedPosts.some((p) => p.id === post.id) ? (
+                  <BookmarkCheck onClick={() => toggleSave(post)} />
+                ) : (
+                  <Bookmark onClick={() => toggleSave(post)} />
+                )}
+              </div>
             </div>
 
-            {/* Post Details */}
-            <div className="post-details">
-              <div className="post-likes">
-                {post.likes.toLocaleString()} likes
-              </div>
-              {post.caption && (
-                <div className="post-caption">
-                  <Link to={`/user/${post.username}`} className="caption-username">
-                    {post.username}
-                  </Link>
-                  <span className="caption-text">{post.caption}</span>
-                </div>
-              )}
-              <button 
-                className="view-comments"
-                onClick={() => setSelectedPost(post)}
-              >
-                View all {post.comments.length} comments
-              </button>
-              <div className="post-time">2 HOURS AGO</div>
-            </div>
-
-            {/* Add Comment */}
-            <div className="post-comment-input">
-              <Smile className="comment-emoji" />
-              <input
-                type="text"
-                placeholder="Add a comment..."
-                className="comment-input"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.target.value) {
-                    addComment(post.id, e.target.value);
-                    e.target.value = '';
-                  }
-                }}
-              />
-              <button
-                className="comment-post-btn"
-                onClick={(e) => {
-                  const input = e.target.previousSibling;
-                  if (input.value) {
-                    addComment(post.id, input.value);
-                    input.value = '';
-                  }
-                }}
-              >
-                Post
-              </button>
-            </div>
-          </article>
+            <p className="likes">{post.likes} likes</p>
+            {post.caption && <p className="caption">{post.caption}</p>}
+            <p className="view-comments" onClick={() => setSelectedPost(post)}>
+              View all {post.comments.length} comments
+            </p>
+          </div>
         ))}
-
-        {/* Loading Indicator */}
-        <div ref={observerRef} className="loading-indicator">
-          {loading && (
-            <div className="spinner"></div>
-          )}
-        </div>
       </div>
 
-      {/* Right Sidebar */}
-      <aside className="right-sidebar">
-        {/* Current User */}
-        <div className="sidebar-user">
-          <img 
-            src="https://i.pravatar.cc/56?img=3" 
-            alt="Your profile" 
-            className="sidebar-avatar" 
-          />
-          <div className="sidebar-user-info">
-            <span className="sidebar-username">your_username</span>
-            <span className="sidebar-name">Your Name</span>
-          </div>
-          <button className="switch-btn">Switch</button>
-        </div>
+ {/* RIGHT SIDEBAR */}
+<div className="right-sidebar">
+  <h3>Suggested for you</h3>
+  {suggestions.map((u) => (
+    <div className="suggested-user" key={u.id}>
+      {/* Link to user profile */}
+      <Link to={`/user/${u.name}`}>
+        <img src={u.avatar} alt={u.name} />
+      </Link>
+      <Link to={`/user/${u.name}`}>
+        <span>{u.name}</span>
+      </Link>
+      {/* Follow / Following toggle */}
+      <button className="follow-btn" onClick={() => toggleFollow(u.id)}>
+        {u.isFollowing ? "Following" : "Follow"}
+      </button>
+    </div>
+  ))}
+</div>
 
-        {/* Suggestions */}
-        <div className="suggestions-section">
-          <div className="suggestions-header">
-            <span className="suggestions-title">Suggestions For You</span>
-            <button className="see-all-btn">See All</button>
-          </div>
-          <div className="suggestions-list">
-            {suggestions.map((u) => (
-              <div key={u.id} className="suggestion-item">
-                <img src={u.avatar} alt={u.name} className="suggestion-avatar" />
-                <div className="suggestion-info">
-                  <span className="suggestion-username">{u.name}</span>
-                  <span className="suggestion-subtitle">Suggested for you</span>
-                </div>
-                <button 
-                  className={`follow-btn ${u.isFollowing ? 'following' : ''}`}
-                  onClick={() => toggleFollow(u.id)}
-                >
-                  {u.isFollowing ? 'Following' : 'Follow'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Footer */}
-        <footer className="sidebar-footer">
-          <div className="footer-links">
-            <a href="#">About</a>
-            <a href="#">Help</a>
-            <a href="#">Press</a>
-            <a href="#">API</a>
-            <a href="#">Jobs</a>
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
-          </div>
-          <div className="footer-copyright">
-            © 2024 PIXNET
-          </div>
-        </footer>
-      </aside>
-
-      {/* Comments Modal */}
+      {/* COMMENTS MODAL */}
       {selectedPost && (
         <div className="modal-overlay" onClick={() => setSelectedPost(null)}>
           <div className="comment-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-image-section">
-              <img
-                src={selectedPost.download_url || selectedPost.image}
-                alt="Post"
-                className="modal-image"
-              />
-            </div>
-            <div className="modal-comments-section">
+            <img
+              src={selectedPost.download_url || selectedPost.image}
+              alt="post"
+              className="modal-img"
+            />
+            <div className="modal-comments">
               <div className="modal-header">
-                <img src={selectedPost.avatar} alt={selectedPost.username} className="modal-avatar" />
-                <span className="modal-username">{selectedPost.username}</span>
-                <button 
-                  className="modal-close"
-                  onClick={() => setSelectedPost(null)}
-                  aria-label="Close"
-                >
-                  <X />
-                </button>
+                <h3>Comments</h3>
+                <X onClick={() => setSelectedPost(null)} />
               </div>
-              <div className="comments-list">
+              <div className="comment-list">
                 {selectedPost.comments.map((c, i) => (
-                  <div key={i} className="comment-item">
-                    <span className="comment-user">{c.user}</span>
-                    <span className="comment-text">{c.text}</span>
-                  </div>
+                  <p key={i}>
+                    <strong>{c.user}</strong> {c.text}
+                  </p>
                 ))}
               </div>
-              <div className="modal-comment-input">
-                <Smile className="modal-emoji" />
+              <div className="comment-input">
                 <input
                   type="text"
                   placeholder="Add a comment..."
-                  className="modal-input"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && e.target.value) {
+                    if (e.key === "Enter") {
                       addComment(selectedPost.id, e.target.value);
-                      e.target.value = '';
+                      e.target.value = "";
                     }
                   }}
                 />
                 <button
-                  className="modal-post-btn"
                   onClick={(e) => {
                     const input = e.target.previousSibling;
-                    if (input.value) {
-                      addComment(selectedPost.id, input.value);
-                      input.value = '';
-                    }
+                    addComment(selectedPost.id, input.value);
+                    input.value = "";
                   }}
                 >
                   Post
@@ -488,39 +342,47 @@ function Home() {
         </div>
       )}
 
-      {/* Share Modal */}
+      {/* SHARE MODAL */}
       {showShare && (
         <div className="modal-overlay" onClick={() => setShowShare(null)}>
           <div className="share-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="share-header">
+            <div className="modal-header">
               <h3>Share Post</h3>
-              <button className="modal-close" onClick={() => setShowShare(null)}>
-                <X />
+              <X onClick={() => setShowShare(null)} />
+            </div>
+            <div className="share-options">
+              <button onClick={handleCopyLink}>🔗 Copy Link</button>
+              <button onClick={() => showToast("Opening WhatsApp...")}>
+                📱 WhatsApp
+              </button>
+              <button onClick={() => showToast("Opening Facebook...")}>
+                📘 Facebook
+              </button>
+              <button onClick={() => showToast("Opening Twitter...")}>
+                🐦 Twitter
               </button>
             </div>
-            <div className="share-users">
+            <hr />
+            <h4>Send to</h4>
+            <div className="send-users">
               {shareUsers.map((u) => (
-                <div key={u.id} className="share-user">
-                  <img src={u.avatar} alt={u.name} className="share-avatar" />
-                  <span className="share-username">{u.name}</span>
+                <div key={u.id} className="send-user">
+                  <img src={u.avatar} alt={u.name} />
+                  <span>{u.name}</span>
                   <button
-                    className={`send-btn ${u.sent ? 'sent' : ''}`}
+                    className={`send-btn ${u.sent ? "sent" : ""}`}
                     onClick={() => toggleSendUser(u.id)}
                   >
-                    {u.sent ? 'Sent' : 'Send'}
+                    {u.sent ? "Sent" : "Send"}
                   </button>
                 </div>
               ))}
             </div>
-            <div className="share-divider" />
-            <button className="copy-link-btn" onClick={handleCopyLink}>
-              <span>🔗 Copy Link</span>
-            </button>
           </div>
         </div>
       )}
 
-      {/* Toast */}
+      {/* TOAST */}
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
